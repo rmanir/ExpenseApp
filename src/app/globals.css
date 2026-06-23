@@ -1,0 +1,90 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  --color-brand-primary: var(--brand-primary);
+  --color-brand-bg: var(--brand-bg);
+  --color-brand-support-1: var(--brand-support-1);
+  --color-brand-support-2: var(--brand-support-2);
+  --color-brand-light: var(--brand-light);
+  --color-brand-text: var(--brand-text);
+}
+
+@layer base {
+  :root {
+    --brand-primary: #059669;
+    --brand-bg: #f8fafc;
+    --brand-support-1: #10b981;
+    --brand-support-2: #34d399;
+    --brand-light: #ecfdf5;
+    --brand-text: #0f172a;
+    
+    --glass-bg: rgba(255, 255, 255, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.8);
+    --glass-input-bg: rgba(255, 255, 255, 0.8);
+    --glass-input-border: rgba(0, 0, 0, 0.1);
+    --glass-input-focus: #ffffff;
+    --glass-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+  }
+
+  .dark {
+    --brand-primary: #059669;
+    --brand-bg: #0f172a;
+    --brand-support-1: #10b981;
+    --brand-support-2: #34d399;
+    --brand-light: #064e3b;
+    --brand-text: #ffffff;
+    
+    --glass-bg: rgba(255, 255, 255, 0.03);
+    --glass-border: rgba(255, 255, 255, 0.05);
+    --glass-input-bg: rgba(0, 0, 0, 0.2);
+    --glass-input-border: rgba(255, 255, 255, 0.1);
+    --glass-input-focus: rgba(0, 0, 0, 0.3);
+    --glass-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  }
+}
+
+body {
+  background-color: var(--color-brand-bg);
+  color: var(--color-brand-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+
+.glass-input {
+  background: var(--glass-input-bg);
+  backdrop-filter: blur(4px);
+  border: 1px solid var(--glass-input-border);
+  color: var(--color-brand-text);
+}
+
+.glass-input:focus {
+  outline: none;
+  border-color: var(--color-brand-primary);
+  background: var(--glass-input-focus);
+  box-shadow: 0 0 0 4px rgba(5, 150, 105, 0.1);
+}
+
+.glass-button {
+  background: var(--color-brand-primary);
+  color: #ffffff;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.glass-button:hover {
+  background: var(--color-brand-support-1);
+}
+
+.glass-button:active {
+  transform: scale(0.98);
+}
