@@ -107,7 +107,7 @@ export async function saveTransaction(tx: ParsedTransaction): Promise<string> {
 
   // 3. Append transaction
   // Column order: Amount, Date, Type, Notes, Category
-  await sheets.spreadsheets.values.append({
+  const appendRes = await sheets.spreadsheets.values.append({
     spreadsheetId: SPREADSHEET_ID,
     range: `'${sheetName}'!A:E`,
     valueInputOption: 'USER_ENTERED',
@@ -118,6 +118,89 @@ export async function saveTransaction(tx: ParsedTransaction): Promise<string> {
       ]
     }
   });
+
+  const updatedRange = appendRes.data.updates?.updatedRange;
+  if (updatedRange) {
+    const match = updatedRange.match(/[a-zA-Z]+(\d+):[a-zA-Z]+(\d+)/);
+    if (match) {
+      const startRow = parseInt(match[1], 10) - 1; // 0-indexed
+      const endRow = parseInt(match[2], 10);
+      
+      const sheetId = targetSheet?.properties?.sheetId;
+      let finalSheetId = sheetId;
+      
+      if (finalSheetId === undefined) {
+        // If it was a new sheet, get the sheet ID
+        const spreadsheet = await sheets.spreadsheets.get({
+          spreadsheetId: SPREADSHEET_ID,
+        });
+        finalSheetId = spreadsheet.data.sheets?.find(s => s.properties?.title === sheetName)?.properties?.sheetId;
+      }
+
+      if (finalSheetId !== undefined) {
+        await sheets.spreadsheets.batchUpdate({
+          spreadsheetId: SPREADSHEET_ID,
+          requestBody: {
+            requests: [
+              {
+                repeatCell: {
+                  range: {
+                    sheetId: finalSheetId,
+                    startRowIndex: startRow,
+                    endRowIndex: endRow,
+                    startColumnIndex: 0,
+                    endColumnIndex: 5,
+                  },
+                  cell: {
+                    userEnteredFormat: {
+                      textFormat: {
+                        bold: false,
+                      },
+                    },
+                  },
+                  fields: 'userEnteredFormat.textFormat.bold',
+                }
+              },
+              {
+                repeatCell: {
+                  range: {
+                    sheetId: finalSheetId,
+                    startRowIndex: startRow,
+                    endRowIndex: endRow,
+                    startColumnIndex: 0,
+                    endColumnIndex: 1,
+                  },
+                  cell: {
+                    userEnteredFormat: {
+                      horizontalAlignment: 'RIGHT',
+                    },
+                  },
+                  fields: 'userEnteredFormat.horizontalAlignment',
+                }
+              },
+              {
+                repeatCell: {
+                  range: {
+                    sheetId: finalSheetId,
+                    startRowIndex: startRow,
+                    endRowIndex: endRow,
+                    startColumnIndex: 1,
+                    endColumnIndex: 5,
+                  },
+                  cell: {
+                    userEnteredFormat: {
+                      horizontalAlignment: 'LEFT',
+                    },
+                  },
+                  fields: 'userEnteredFormat.horizontalAlignment',
+                }
+              }
+            ]
+          }
+        });
+      }
+    }
+  }
 
   return sheetName;
 }
