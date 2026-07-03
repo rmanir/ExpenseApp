@@ -19,7 +19,8 @@ export async function POST(req: Request) {
     }
 
     const tx = parseTransaction(text);
-    const sheetName = await saveTransaction(tx);
+    const username = cookieStore.get('expense_user')?.value;
+    const sheetName = await saveTransaction(tx, username);
 
     return NextResponse.json({ success: true, transaction: tx, sheetName });
   } catch (err: any) {

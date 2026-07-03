@@ -21,7 +21,7 @@ function getMonthName(dateStr: string): string {
   return formatter.format(d);
 }
 
-export async function saveTransaction(tx: ParsedTransaction): Promise<string> {
+export async function saveTransaction(tx: ParsedTransaction, username?: string): Promise<string> {
   const sheetName = getMonthName(tx.date);
   
   // 1. Check if sheet exists
@@ -173,9 +173,10 @@ export async function saveTransaction(tx: ParsedTransaction): Promise<string> {
                   cell: {
                     userEnteredFormat: {
                       horizontalAlignment: 'RIGHT',
+                      backgroundColor: username === 'raji' ? { red: 242/255, green: 235/255, blue: 202/255 } : undefined,
                     },
                   },
-                  fields: 'userEnteredFormat.horizontalAlignment',
+                  fields: 'userEnteredFormat.horizontalAlignment' + (username === 'raji' ? ',userEnteredFormat.backgroundColor' : ''),
                 }
               },
               {
