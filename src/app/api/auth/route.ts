@@ -4,8 +4,9 @@ import { cookies } from 'next/headers';
 export async function POST(req: Request) {
   try {
     const { username, password } = await req.json();
+    const lowerUsername = username?.toLowerCase() || '';
     
-    if ((username === 'raju' || username === 'raji') && password === process.env.APP_PASSWORD) {
+    if ((lowerUsername === 'raju' || lowerUsername === 'raji') && password === process.env.APP_PASSWORD) {
       const cookieStore = await cookies();
       cookieStore.set('expense_session', password, {
         httpOnly: true,
@@ -14,7 +15,7 @@ export async function POST(req: Request) {
         maxAge: 30 * 24 * 60 * 60, // 30 days
         path: '/',
       });
-      cookieStore.set('expense_user', username, {
+      cookieStore.set('expense_user', lowerUsername, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',

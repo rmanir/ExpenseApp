@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getRecentTransactions, getTodaySummary } from '@/lib/sheets';
+import { getRecentTransactions, getSummaries } from '@/lib/sheets';
 import { cookies } from 'next/headers';
 
 export async function GET() {
@@ -12,7 +12,7 @@ export async function GET() {
 
   try {
     const recent = await getRecentTransactions(7);
-    const summary = await getTodaySummary();
+    const summary = await getSummaries();
 
     return NextResponse.json({ recent, summary });
   } catch (err: any) {

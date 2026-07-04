@@ -258,7 +258,7 @@ export async function getRecentTransactions(days: number = 7) {
   return recent;
 }
 
-export async function getTodaySummary() {
+export async function getSummaries() {
   // Use Asia/Kolkata timezone to get today's date
   const formatter = new Intl.DateTimeFormat('en-CA', {
     timeZone: 'Asia/Kolkata',
@@ -267,29 +267,79 @@ export async function getTodaySummary() {
     day: '2-digit',
   });
   
-  const parts = formatter.formatToParts(new Date());
+  const now = new Date();
+  const parts = formatter.formatToParts(now);
   const year = parts.find(p => p.type === 'year')?.value;
   const month = parts.find(p => p.type === 'month')?.value;
   const day = parts.find(p => p.type === 'day')?.value;
   const todayDateStr = `${year}-${month}-${day}`;
 
-  const recent = await getRecentTransactions(7);
-  const todayTx = recent.filter(tx => tx.date === todayDateStr);
+  const currentMonthName = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(now);
 
-  let income = 0;
-  let expense = 0;
+  const spreadsheet = await sheets.spreadsheets.get({
+    spreadsheetId: SPREADSHEET_ID,
+  });
 
-  for (const tx of todayTx) {
-    if (tx.type.toLowerCase() === 'credit') {
-      income += tx.amount;
-    } else {
-      expense += tx.amount;
+  const sheetsList = spreadsheet.data.sheets || [];
+  
+  // We need to look at the current and maybe previous month sheet to get full 7 days and current month
+  const prevDate = new Date(now);
+  prevDate.setMonth(now.getMonth() - 1);
+  const prevMonthName = new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(prevDate);
+
+  const sheetsToRead = [];
+  if (sheetsList.some(s => s.properties?.title === currentMonthName)) sheetsToRead.push(currentMonthName);
+  if (sheetsList.some(s => s.properties?.title === prevMonthName)) sheetsToRead.push(prevMonthName);
+
+  const allTx = [];
+
+  for (const sheetName of sheetsToRead) {
+    const res = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: `'${sheetName}'!A2:E`,
+    });
+    
+    if (res.data.values) {
+      for (const row of res.data.values) {
+        if (row.length >= 5) {
+          allTx.push({
+            amount: parseFloat(row[0]),
+            date: row[1],
+            type: row[2],
+            notes: row[3],
+            category: row[4],
+            sheetName: sheetName
+          });
+        }
+      }
     }
   }
 
+  const todayTx = allTx.filter(tx => tx.date === todayDateStr);
+  
+  const todayObj = new Date();
+  todayObj.setHours(0,0,0,0);
+  const cutoff7Days = new Date(todayObj.getTime() - 6 * 24 * 60 * 60 * 1000); // 7 days including today
+  const last7DaysTx = allTx.filter(tx => new Date(tx.date) >= cutoff7Days);
+
+  const currentMonthTx = allTx.filter(tx => tx.sheetName === currentMonthName);
+
+  const calculateSummary = (txs: any[]) => {
+    let income = 0;
+    let expense = 0;
+    for (const tx of txs) {
+      if (tx.type.toLowerCase() === 'credit') {
+        income += tx.amount;
+      } else {
+        expense += tx.amount;
+      }
+    }
+    return { income, expense, net: income - expense };
+  };
+
   return {
-    income,
-    expense,
-    net: income - expense
+    today: calculateSummary(todayTx),
+    last7Days: calculateSummary(last7DaysTx),
+    currentMonth: calculateSummary(currentMonthTx)
   };
 }

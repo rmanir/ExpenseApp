@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Send, CheckCircle2, AlertCircle, LogOut, Loader2, ArrowDownRight, ArrowUpRight } from "lucide-react";
+import { Send, CheckCircle2, AlertCircle, LogOut, Loader2, ArrowDownRight, ArrowUpRight, ChevronDown } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
@@ -21,6 +21,14 @@ export default function Home() {
   const [errorData, setErrorData] = useState<string | null>(null);
   const [history, setHistory] = useState<any>(null);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
+  const [summaryType, setSummaryType] = useState<"today" | "last7Days" | "currentMonth">("today");
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  const summaryOptions = [
+    { id: "today", label: "Today's Summary" },
+    { id: "last7Days", label: "Last 7 Days Summary" },
+    { id: "currentMonth", label: "Current Month Summary" }
+  ];
   
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -204,23 +212,62 @@ export default function Home() {
       {/* Summary Widget */}
       {history?.summary && (
         <div className="glass-card rounded-3xl p-6 mb-8 border border-slate-200 dark:border-white/5">
-          <h2 className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-4 uppercase tracking-wider">Today's Summary</h2>
+          <div className="mb-6 relative inline-block z-10">
+            <button
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              className="flex items-center gap-2 text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 glass-card px-4 py-2.5 rounded-xl border border-white/40 dark:border-white/10 shadow-sm transition-all hover:bg-white/60 dark:hover:bg-white/5 uppercase tracking-wider"
+            >
+              {summaryOptions.find(o => o.id === summaryType)?.label}
+              <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${isDropdownOpen ? 'rotate-180 text-emerald-500' : 'text-slate-400'}`} />
+            </button>
+            
+            <AnimatePresence>
+              {isDropdownOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -10, scale: 0.95 }}
+                  transition={{ duration: 0.2, ease: "easeOut" }}
+                  className="absolute left-0 mt-2 w-64 glass-card rounded-2xl border border-white/40 dark:border-white/10 shadow-2xl overflow-hidden backdrop-blur-2xl bg-white/70 dark:bg-slate-900/70"
+                >
+                  <div className="p-1.5 flex flex-col gap-1">
+                    {summaryOptions.map(option => (
+                      <button
+                        key={option.id}
+                        onClick={() => {
+                          setSummaryType(option.id as any);
+                          setIsDropdownOpen(false);
+                        }}
+                        className={`w-full text-left px-4 py-3 rounded-xl text-xs font-semibold transition-all uppercase tracking-wider ${
+                          summaryType === option.id 
+                            ? 'text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 shadow-sm' 
+                            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-900/5 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-slate-200'
+                        }`}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
           <div className="grid grid-cols-3 gap-4">
             <div>
               <div className="text-slate-500 dark:text-slate-400 text-xs mb-1 flex items-center gap-1">
                 <ArrowDownRight className="w-3 h-3 text-emerald-600 dark:text-emerald-400" /> Income
               </div>
-              <div className="text-xl font-semibold text-emerald-600 dark:text-emerald-400">₹{history.summary.income}</div>
+              <div className="text-xl font-semibold text-emerald-600 dark:text-emerald-400">₹{history.summary[summaryType]?.income || 0}</div>
             </div>
             <div>
               <div className="text-slate-500 dark:text-slate-400 text-xs mb-1 flex items-center gap-1">
                 <ArrowUpRight className="w-3 h-3 text-red-600 dark:text-red-400" /> Expense
               </div>
-              <div className="text-xl font-semibold text-red-600 dark:text-red-400">₹{history.summary.expense}</div>
+              <div className="text-xl font-semibold text-red-600 dark:text-red-400">₹{history.summary[summaryType]?.expense || 0}</div>
             </div>
             <div>
               <div className="text-slate-500 dark:text-slate-400 text-xs mb-1">Net</div>
-              <div className="text-xl font-semibold text-slate-900 dark:text-white">₹{history.summary.net}</div>
+              <div className="text-xl font-semibold text-slate-900 dark:text-white">₹{history.summary[summaryType]?.net || 0}</div>
             </div>
           </div>
         </div>
