@@ -5,6 +5,7 @@ import { cookies } from 'next/headers';
 export async function GET() {
   const cookieStore = await cookies();
   const session = cookieStore.get('expense_session');
+  const user = cookieStore.get('expense_user');
 
   if (session?.value !== process.env.APP_PASSWORD) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -14,8 +15,8 @@ export async function GET() {
     const recent = await getRecentTransactions(7);
     const summary = await getSummaries();
 
-    return NextResponse.json({ recent, summary });
+    return NextResponse.json({ recent, summary, user: user?.value || 'User' });
   } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({ error: err.message, user: user?.value || 'User' }, { status: 500 });
   }
 }

@@ -47,9 +47,11 @@ export default function Home() {
         router.push("/login");
         return;
       }
+      const data = await res.json();
       if (res.ok) {
-        const data = await res.json();
         setHistory(data);
+      } else {
+        setHistory({ user: data.user });
       }
     } catch (err) {
       console.error(err);
@@ -113,7 +115,9 @@ export default function Home() {
       {/* Header */}
       <header className="flex items-center justify-between mb-8 pt-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400">Expense Tracker</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400">
+            {history?.user ? `Hi, ${history.user.charAt(0).toUpperCase() + history.user.slice(1)}! 👋` : 'Expense Tracker'}
+          </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400">Quick expense capture and tracking</p>
         </div>
         <div className="flex items-center gap-2">
