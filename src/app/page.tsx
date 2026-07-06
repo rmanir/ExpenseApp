@@ -115,9 +115,13 @@ export default function Home() {
       {/* Header */}
       <header className="flex items-center justify-between mb-8 pt-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400">
-            {history?.user ? `Hi, ${history.user.charAt(0).toUpperCase() + history.user.slice(1)}! 👋` : 'Expense Tracker'}
-          </h1>
+          {isLoadingHistory ? (
+            <div className="h-8 w-48 bg-emerald-100 dark:bg-emerald-900/30 rounded animate-pulse mb-1"></div>
+          ) : (
+            <h1 className="text-2xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400">
+              {history?.user ? `Hi, ${history.user.charAt(0).toUpperCase() + history.user.slice(1)}! 👋` : 'Expense Tracker'}
+            </h1>
+          )}
           <p className="text-sm text-slate-500 dark:text-slate-400">Quick expense capture and tracking</p>
         </div>
         <div className="flex items-center gap-2">
