@@ -24,6 +24,7 @@ export default function Home({ initialUser }: { initialUser?: string }) {
   const [summaryType, setSummaryType] = useState<"today" | "last7Days" | "currentMonth">("today");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [deletingTx, setDeletingTx] = useState<{ sheetName: string; rowIndex: number } | null>(null);
+  const [confirmDeleteTx, setConfirmDeleteTx] = useState<any>(null);
 
   const summaryOptions = [
     { id: "today", label: "Today's Summary" },
@@ -103,15 +104,14 @@ export default function Home({ initialUser }: { initialUser?: string }) {
     router.push("/login");
   };
 
-  const handleDelete = async (sheetName: string, rowIndex: number) => {
-    if (!confirm("Are you sure you want to delete this transaction?")) return;
-    
-    setDeletingTx({ sheetName, rowIndex });
+  const executeDelete = async (tx: any) => {
+    setConfirmDeleteTx(null);
+    setDeletingTx({ sheetName: tx.sheetName, rowIndex: tx.rowIndex });
     try {
       const res = await fetch("/api/expense", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ sheetName, rowIndex }),
+        body: JSON.stringify({ sheetName: tx.sheetName, rowIndex: tx.rowIndex }),
       });
       if (res.ok) {
         fetchHistory(); // Refresh data
@@ -340,7 +340,7 @@ export default function Home({ initialUser }: { initialUser?: string }) {
                           {tx.type === 'Credit' ? '+' : ''}₹{tx.amount}
                         </div>
                         <button
-                          onClick={() => tx.sheetName && tx.rowIndex !== undefined && handleDelete(tx.sheetName, tx.rowIndex)}
+                          onClick={() => tx.sheetName && tx.rowIndex !== undefined && setConfirmDeleteTx(tx)}
                           disabled={!tx.sheetName || tx.rowIndex === undefined || (deletingTx?.sheetName === tx.sheetName && deletingTx?.rowIndex === tx.rowIndex)}
                           className="p-2 rounded-full hover:bg-red-50 dark:hover:bg-red-500/10 text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                           title="Delete transaction"
@@ -361,6 +361,48 @@ export default function Home({ initialUser }: { initialUser?: string }) {
         )}
       </div>
 
+    
+      <AnimatePresence>
+        {confirmDeleteTx && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 dark:bg-black/60 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              className="glass-card bg-white dark:bg-slate-900 w-full max-w-sm rounded-3xl p-6 shadow-2xl border border-emerald-100 dark:border-emerald-500/20"
+            >
+              <div className="flex flex-col items-center text-center mb-6">
+                <div className="w-12 h-12 bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center mb-4">
+                  <AlertCircle className="w-6 h-6" />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Delete Transaction?</h3>
+                <p className="text-slate-500 dark:text-slate-400 text-sm">
+                  Are you sure you want to delete this {confirmDeleteTx.notes} transaction of ₹{confirmDeleteTx.amount}? This action cannot be undone.
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setConfirmDeleteTx(null)}
+                  className="flex-1 px-4 py-3 rounded-xl font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => executeDelete(confirmDeleteTx)}
+                  className="flex-1 px-4 py-3 rounded-xl font-semibold text-white bg-red-500 hover:bg-red-600 transition-colors shadow-lg shadow-red-500/30"
+                >
+                  Delete
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
