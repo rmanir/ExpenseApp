@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Send, CheckCircle2, AlertCircle, LogOut, Loader2, ArrowDownRight, ArrowUpRight, ChevronDown } from "lucide-react";
+import { Send, CheckCircle2, AlertCircle, LogOut, Loader2, ArrowDownRight, ArrowUpRight, ChevronDown, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
@@ -23,6 +23,7 @@ export default function Home({ initialUser }: { initialUser?: string }) {
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
   const [summaryType, setSummaryType] = useState<"today" | "last7Days" | "currentMonth">("today");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [deletingTx, setDeletingTx] = useState<{ sheetName: string; rowIndex: number } | null>(null);
 
   const summaryOptions = [
     { id: "today", label: "Today's Summary" },
@@ -102,7 +103,31 @@ export default function Home({ initialUser }: { initialUser?: string }) {
     router.push("/login");
   };
 
-  const groupedTx = history?.recent?.reduce((acc: any, tx: any) => {
+  const handleDelete = async (sheetName: string, rowIndex: number) => {
+    if (!confirm("Are you sure you want to delete this transaction?")) return;
+    
+    setDeletingTx({ sheetName, rowIndex });
+    try {
+      const res = await fetch("/api/expense", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sheetName, rowIndex }),
+      });
+      if (res.ok) {
+        fetchHistory(); // Refresh data
+      } else {
+        const data = await res.json();
+        alert(data.error || "Failed to delete transaction");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("An error occurred while deleting the transaction.");
+    } finally {
+      setDeletingTx(null);
+    }
+  };
+
+  const groupedTx = history?.summary?.transactions?.[summaryType]?.reduce((acc: any, tx: any) => {
     const date = new Date(tx.date);
     const dateStr = new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).format(date);
     if (!acc[dateStr]) acc[dateStr] = [];
@@ -127,6 +152,7 @@ export default function Home({ initialUser }: { initialUser?: string }) {
         <div className="flex items-center gap-2">
           <ThemeToggle />
           <button 
+            suppressHydrationWarning
             onClick={handleLogout}
             className="p-2 rounded-full glass-card hover:bg-slate-900/5 dark:hover:bg-white/10 transition-colors"
             title="Logout"
@@ -149,11 +175,13 @@ export default function Home({ initialUser }: { initialUser?: string }) {
               placeholder={PLACEHOLDERS[placeholderIdx]}
               className="w-full glass-input rounded-2xl px-6 py-5 text-xl font-medium placeholder:text-slate-400 dark:placeholder:text-slate-500/70 transition-all focus:ring-2 focus:ring-emerald-500/50"
               disabled={isSaving}
+              suppressHydrationWarning
               autoFocus
             />
           </div>
           
           <button
+            suppressHydrationWarning
             type="submit"
             disabled={isSaving || !input.trim()}
             className="w-full glass-button rounded-2xl py-4 font-semibold text-lg flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -307,8 +335,22 @@ export default function Home({ initialUser }: { initialUser?: string }) {
                           <div className="text-xs text-slate-500 dark:text-slate-400">{tx.category}</div>
                         </div>
                       </div>
-                      <div className={`font-semibold ${tx.type === 'Credit' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-900 dark:text-white'}`}>
-                        {tx.type === 'Credit' ? '+' : ''}₹{tx.amount}
+                      <div className="flex items-center gap-4">
+                        <div className={`font-semibold ${tx.type === 'Credit' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-900 dark:text-white'}`}>
+                          {tx.type === 'Credit' ? '+' : ''}₹{tx.amount}
+                        </div>
+                        <button
+                          onClick={() => tx.sheetName && tx.rowIndex !== undefined && handleDelete(tx.sheetName, tx.rowIndex)}
+                          disabled={!tx.sheetName || tx.rowIndex === undefined || (deletingTx?.sheetName === tx.sheetName && deletingTx?.rowIndex === tx.rowIndex)}
+                          className="p-2 rounded-full hover:bg-red-50 dark:hover:bg-red-500/10 text-slate-400 hover:text-red-500 dark:hover:text-red-400 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          title="Delete transaction"
+                        >
+                          {(deletingTx?.sheetName === tx.sheetName && deletingTx?.rowIndex === tx.rowIndex) ? (
+                            <Loader2 className="w-4 h-4 animate-spin text-red-500" />
+                          ) : (
+                            <Trash2 className="w-4 h-4" />
+                          )}
+                        </button>
                       </div>
                     </div>
                   ))}

@@ -12,8 +12,8 @@ export async function GET() {
   }
 
   try {
-    const recent = await getRecentTransactions(7);
-    const summary = await getSummaries();
+    const recent = await getRecentTransactions(7, user?.value);
+    const summary = await getSummaries(user?.value);
 
     return NextResponse.json({ recent, summary, user: user?.value || 'User' });
   } catch (err: any) {

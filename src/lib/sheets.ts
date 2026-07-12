@@ -96,25 +96,24 @@ export async function saveTransaction(tx: ParsedTransaction, username?: string):
       // Add headers
       await sheets.spreadsheets.values.update({
         spreadsheetId: SPREADSHEET_ID,
-        range: `'${sheetName}'!A1:E1`,
+        range: `'${sheetName}'!A1:F1`,
         valueInputOption: 'USER_ENTERED',
         requestBody: {
-          values: [['Amount', 'Date', 'Type', 'Notes', 'Category']]
+          values: [['Amount', 'Date', 'Type', 'Notes', 'Category', 'User']]
         }
       });
     }
   }
 
-  // 3. Append transaction
-  // Column order: Amount, Date, Type, Notes, Category
+  // Column order: Amount, Date, Type, Notes, Category, User
   const appendRes = await sheets.spreadsheets.values.append({
     spreadsheetId: SPREADSHEET_ID,
-    range: `'${sheetName}'!A:E`,
+    range: `'${sheetName}'!A:F`,
     valueInputOption: 'USER_ENTERED',
     insertDataOption: 'INSERT_ROWS',
     requestBody: {
       values: [
-        [tx.amount, tx.date, tx.type, tx.notes, tx.category]
+        [tx.amount, tx.date, tx.type, tx.notes, tx.category, username || '']
       ]
     }
   });
@@ -149,7 +148,7 @@ export async function saveTransaction(tx: ParsedTransaction, username?: string):
                     startRowIndex: startRow,
                     endRowIndex: endRow,
                     startColumnIndex: 0,
-                    endColumnIndex: 5,
+                    endColumnIndex: 6,
                   },
                   cell: {
                     userEnteredFormat: {
@@ -173,10 +172,10 @@ export async function saveTransaction(tx: ParsedTransaction, username?: string):
                   cell: {
                     userEnteredFormat: {
                       horizontalAlignment: 'RIGHT',
-                      backgroundColor: username === 'raji' ? { red: 242/255, green: 235/255, blue: 202/255 } : undefined,
+                      backgroundColor: username?.toLowerCase() === 'raji' ? { red: 242/255, green: 235/255, blue: 202/255 } : { red: 1, green: 1, blue: 1 },
                     },
                   },
-                  fields: 'userEnteredFormat.horizontalAlignment' + (username === 'raji' ? ',userEnteredFormat.backgroundColor' : ''),
+                  fields: 'userEnteredFormat.horizontalAlignment,userEnteredFormat.backgroundColor',
                 }
               },
               {
@@ -186,7 +185,7 @@ export async function saveTransaction(tx: ParsedTransaction, username?: string):
                     startRowIndex: startRow,
                     endRowIndex: endRow,
                     startColumnIndex: 1,
-                    endColumnIndex: 5,
+                    endColumnIndex: 6,
                   },
                   cell: {
                     userEnteredFormat: {
@@ -206,7 +205,7 @@ export async function saveTransaction(tx: ParsedTransaction, username?: string):
   return sheetName;
 }
 
-export async function getRecentTransactions(days: number = 7) {
+export async function getRecentTransactions(days: number = 7, username?: string) {
   const spreadsheet = await sheets.spreadsheets.get({
     spreadsheetId: SPREADSHEET_ID,
   });
@@ -228,19 +227,26 @@ export async function getRecentTransactions(days: number = 7) {
   for (const sheetName of sheetsToRead) {
     const res = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
-      range: `'${sheetName}'!A2:E`,
+      range: `'${sheetName}'!A2:F`,
     });
     
     if (res.data.values) {
-      for (const row of res.data.values) {
+      for (let i = 0; i < res.data.values.length; i++) {
+        const row = res.data.values[i];
         if (row.length >= 5) {
-          allTx.push({
-            amount: parseFloat(row[0]),
-            date: row[1],
-            type: row[2],
-            notes: row[3],
-            category: row[4],
-          });
+          const txUser = row[5] || '';
+          if (!username || txUser === username) {
+            allTx.push({
+              amount: parseFloat(row[0]),
+              date: row[1],
+              type: row[2],
+              notes: row[3],
+              category: row[4],
+              sheetName: sheetName,
+              user: txUser,
+              rowIndex: i + 1, // +1 because we read from A2
+            });
+          }
         }
       }
     }
@@ -258,7 +264,7 @@ export async function getRecentTransactions(days: number = 7) {
   return recent;
 }
 
-export async function getSummaries() {
+export async function getSummaries(username?: string) {
   // Use Asia/Kolkata timezone to get today's date
   const formatter = new Intl.DateTimeFormat('en-CA', {
     timeZone: 'Asia/Kolkata',
@@ -296,20 +302,26 @@ export async function getSummaries() {
   for (const sheetName of sheetsToRead) {
     const res = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
-      range: `'${sheetName}'!A2:E`,
+      range: `'${sheetName}'!A2:F`,
     });
     
     if (res.data.values) {
-      for (const row of res.data.values) {
+      for (let i = 0; i < res.data.values.length; i++) {
+        const row = res.data.values[i];
         if (row.length >= 5) {
-          allTx.push({
-            amount: parseFloat(row[0]),
-            date: row[1],
-            type: row[2],
-            notes: row[3],
-            category: row[4],
-            sheetName: sheetName
-          });
+          const txUser = row[5] || '';
+          if (!username || txUser === username) {
+              allTx.push({
+                amount: parseFloat(row[0]),
+                date: row[1],
+                type: row[2],
+                notes: row[3],
+                category: row[4],
+                sheetName: sheetName,
+                user: txUser,
+                rowIndex: i + 1, // +1 because we read from A2 (row index 1 in 0-based sheets API)
+              });
+          }
         }
       }
     }
@@ -340,6 +352,40 @@ export async function getSummaries() {
   return {
     today: calculateSummary(todayTx),
     last7Days: calculateSummary(last7DaysTx),
-    currentMonth: calculateSummary(currentMonthTx)
+    currentMonth: calculateSummary(currentMonthTx),
+    transactions: {
+      today: todayTx.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+      last7Days: last7DaysTx.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+      currentMonth: currentMonthTx.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+    }
   };
+}
+
+export async function deleteTransaction(sheetName: string, rowIndex: number) {
+  const spreadsheet = await sheets.spreadsheets.get({
+    spreadsheetId: SPREADSHEET_ID,
+  });
+
+  const targetSheet = spreadsheet.data.sheets?.find(s => s.properties?.title === sheetName);
+  if (!targetSheet || targetSheet.properties?.sheetId === undefined) {
+    throw new Error('Sheet not found');
+  }
+
+  await sheets.spreadsheets.batchUpdate({
+    spreadsheetId: SPREADSHEET_ID,
+    requestBody: {
+      requests: [
+        {
+          deleteDimension: {
+            range: {
+              sheetId: targetSheet.properties.sheetId,
+              dimension: 'ROWS',
+              startIndex: rowIndex,
+              endIndex: rowIndex + 1,
+            },
+          }
+        }
+      ]
+    }
+  });
 }

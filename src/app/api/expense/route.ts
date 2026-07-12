@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { parseTransaction } from '@/lib/parser';
-import { saveTransaction } from '@/lib/sheets';
+import { saveTransaction, deleteTransaction } from '@/lib/sheets';
 import { cookies } from 'next/headers';
 
 export async function POST(req: Request) {
@@ -23,6 +23,30 @@ export async function POST(req: Request) {
     const sheetName = await saveTransaction(tx, username);
 
     return NextResponse.json({ success: true, transaction: tx, sheetName });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 400 });
+  }
+}
+
+export async function DELETE(req: Request) {
+  const cookieStore = await cookies();
+  const session = cookieStore.get('expense_session');
+
+  if (session?.value !== process.env.APP_PASSWORD) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  try {
+    const body = await req.json();
+    const { sheetName, rowIndex } = body;
+    
+    if (!sheetName || rowIndex === undefined) {
+      return NextResponse.json({ error: 'Missing sheetName or rowIndex' }, { status: 400 });
+    }
+
+    await deleteTransaction(sheetName, rowIndex);
+
+    return NextResponse.json({ success: true });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 400 });
   }
