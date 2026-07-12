@@ -127,7 +127,7 @@ function parseDate(dateStr?: string): string {
   const d = parseInt(day, 10);
   const m = parseInt(month, 10);
   if (isNaN(d) || isNaN(m) || d < 1 || d > 31 || m < 1 || m > 12) {
-    throw new Error('Invalid Date. Example: 22/06');
+    throw new Error('Invalid Input\n\nValid Format. Examples: \n89 food d\n10000 salary c\n500 petrol d 22/06');
   }
 
   return `${currentYear}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
@@ -136,13 +136,13 @@ function parseDate(dateStr?: string): string {
 export function parseTransaction(input: string): ParsedTransaction {
   const tokens = input.trim().split(/\s+/);
   if (tokens.length < 3) {
-    throw new Error('Invalid Format. Examples: \n89 food d\n10000 salary c\n500 petrol d 22/06');
+    throw new Error('Invalid Input\n\nValid Format. Examples: \n89 food d\n10000 salary c\n500 petrol d 22/06');
   }
 
   const amountStr = tokens[0];
   const amount = parseFloat(amountStr);
   if (isNaN(amount) || amount <= 0) {
-    throw new Error('Invalid Amount');
+    throw new Error('Invalid Input\n\nValid Format. Examples: \n89 food d\n10000 salary c\n500 petrol d 22/06');
   }
 
   let dateStr: string | undefined = undefined;
@@ -162,13 +162,13 @@ export function parseTransaction(input: string): ParsedTransaction {
   }
 
   if (typeStr !== 'c' && typeStr !== 'd') {
-    throw new Error('Type must be:\nd = Debit\nc = Credit');
+    throw new Error('Invalid Input\n\nValid Format. Examples: \n89 food d\n10000 salary c\n500 petrol d 22/06');
   }
 
   const type: TransactionType = typeStr === 'c' ? 'Credit' : 'Debit';
   const notes = notesTokens.join(' ');
   if (!notes) {
-    throw new Error('Notes missing');
+    throw new Error('Invalid Input\n\nValid Format. Examples: \n89 food d\n10000 salary c\n500 petrol d 22/06');
   }
 
   const date = parseDate(dateStr);

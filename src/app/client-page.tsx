@@ -136,15 +136,18 @@ export default function Home({ initialUser }: { initialUser?: string }) {
   }, {}) || {};
 
   return (
-    <div className="min-h-screen p-4 md:p-8 max-w-2xl mx-auto pb-24">
+    <div className="min-h-screen p-4 md:p-8 max-w-2xl mx-auto pb-24 relative z-10">
       {/* Header */}
       <header className="flex items-center justify-between mb-8 pt-4">
         <div>
           {isLoadingHistory && !initialUser ? (
-            <div className="h-8 w-48 bg-emerald-100 dark:bg-emerald-900/30 rounded animate-pulse mb-1"></div>
+            <div className="h-8 w-48 bg-slate-100 dark:bg-slate-900/30 rounded animate-pulse mb-1"></div>
           ) : (
-            <h1 className="text-2xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400">
-              {(history?.user || initialUser) ? `Hi, ${((history?.user || initialUser) as string).charAt(0).toUpperCase() + ((history?.user || initialUser) as string).slice(1)}! 👋` : 'Expense Tracker'}
+            <h1 className="text-3xl font-extrabold tracking-tight drop-shadow-sm flex items-center gap-2">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-zinc-900 to-zinc-600 dark:from-white dark:to-zinc-400">
+                {(history?.user || initialUser) ? `Hi, ${((history?.user || initialUser) as string).charAt(0).toUpperCase() + ((history?.user || initialUser) as string).slice(1)}!` : 'Expense Tracker'}
+              </span>
+              {(history?.user || initialUser) && <span>👋</span>}
             </h1>
           )}
           <p className="text-sm text-slate-500 dark:text-slate-400">Quick expense capture and tracking</p>
@@ -163,8 +166,8 @@ export default function Home({ initialUser }: { initialUser?: string }) {
       </header>
 
       {/* Entry Card */}
-      <div className="glass-card rounded-3xl p-6 mb-8 relative overflow-hidden shadow-xl shadow-emerald-500/10 dark:shadow-emerald-900/10 border border-emerald-200 dark:border-emerald-500/20">
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-emerald-600" />
+      <div className="glass-card glass-card-hover rounded-3xl p-6 md:p-8 mb-8 relative overflow-hidden border border-white/60 dark:border-white/10">
+        <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-zinc-400 via-zinc-600 to-zinc-900 dark:from-zinc-700 dark:via-zinc-500 dark:to-zinc-300" />
         <form onSubmit={handleSave} className="flex flex-col gap-4">
           <div className="relative">
             <input
@@ -173,7 +176,7 @@ export default function Home({ initialUser }: { initialUser?: string }) {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder={PLACEHOLDERS[placeholderIdx]}
-              className="w-full glass-input rounded-2xl px-6 py-5 text-xl font-medium placeholder:text-slate-400 dark:placeholder:text-slate-500/70 transition-all focus:ring-2 focus:ring-emerald-500/50"
+              className="w-full glass-input rounded-2xl px-6 py-5 text-xl font-medium placeholder:text-slate-400 dark:placeholder:text-slate-500/70 transition-all focus:ring-2 focus:ring-slate-500/50"
               disabled={isSaving}
               suppressHydrationWarning
               autoFocus
@@ -184,7 +187,7 @@ export default function Home({ initialUser }: { initialUser?: string }) {
             suppressHydrationWarning
             type="submit"
             disabled={isSaving || !input.trim()}
-            className="w-full glass-button rounded-2xl py-4 font-semibold text-lg flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full glass-button rounded-2xl py-4 font-semibold text-lg flex items-center justify-center gap-2 shadow-lg shadow-slate-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSaving ? <Loader2 className="w-6 h-6 animate-spin" /> : <Send className="w-5 h-5" />}
             {isSaving ? "Saving..." : "Save Transaction"}
@@ -215,13 +218,13 @@ export default function Home({ initialUser }: { initialUser?: string }) {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="glass-card bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/30 rounded-2xl p-5 mb-8"
+            className="glass-card bg-slate-50 dark:bg-slate-500/10 border-slate-200 dark:border-slate-500/30 rounded-2xl p-5 mb-8"
           >
-            <div className="flex items-center gap-3 mb-4 text-emerald-600 dark:text-emerald-400">
+            <div className="flex items-center gap-3 mb-4 text-slate-600 dark:text-slate-400">
               <CheckCircle2 className="w-6 h-6" />
               <h3 className="font-semibold text-lg">Saved Successfully!</h3>
             </div>
-            <div className="grid grid-cols-2 gap-y-2 text-sm text-emerald-900/80 dark:text-emerald-100/80 mb-4">
+            <div className="grid grid-cols-2 gap-y-2 text-sm text-slate-900/80 dark:text-slate-100/80 mb-4">
               <div className="text-slate-500 dark:text-slate-400">Amount:</div>
               <div className="font-medium text-slate-900 dark:text-white">₹{successData.transaction.amount}</div>
               
@@ -237,9 +240,9 @@ export default function Home({ initialUser }: { initialUser?: string }) {
               <div className="text-slate-500 dark:text-slate-400">Date:</div>
               <div className="font-medium text-slate-900 dark:text-white">{successData.transaction.date}</div>
             </div>
-            <div className="pt-3 border-t border-emerald-200 dark:border-emerald-500/20 text-sm">
+            <div className="pt-3 border-t border-slate-200 dark:border-slate-500/20 text-sm">
               <span className="text-slate-500 dark:text-slate-400">Saved To: </span>
-              <span className="font-medium text-emerald-700 dark:text-emerald-300">{successData.sheetName}</span>
+              <span className="font-medium text-slate-700 dark:text-slate-300">{successData.sheetName}</span>
             </div>
           </motion.div>
         )}
@@ -247,14 +250,14 @@ export default function Home({ initialUser }: { initialUser?: string }) {
 
       {/* Summary Widget */}
       {history?.summary && (
-        <div className="glass-card rounded-3xl p-6 mb-8 border border-slate-200 dark:border-white/5">
+        <div className="glass-card glass-card-hover rounded-3xl p-6 md:p-8 mb-8 border border-white/60 dark:border-white/10">
           <div className="mb-6 relative inline-block z-10">
             <button
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
               className="flex items-center gap-2 text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-200 glass-card px-4 py-2.5 rounded-xl border border-white/40 dark:border-white/10 shadow-sm transition-all hover:bg-white/60 dark:hover:bg-white/5 uppercase tracking-wider"
             >
               {summaryOptions.find(o => o.id === summaryType)?.label}
-              <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${isDropdownOpen ? 'rotate-180 text-emerald-500' : 'text-slate-400'}`} />
+              <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${isDropdownOpen ? 'rotate-180 text-slate-500' : 'text-slate-400'}`} />
             </button>
             
             <AnimatePresence>
@@ -276,7 +279,7 @@ export default function Home({ initialUser }: { initialUser?: string }) {
                         }}
                         className={`w-full text-left px-4 py-3 rounded-xl text-xs font-semibold transition-all uppercase tracking-wider ${
                           summaryType === option.id 
-                            ? 'text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 shadow-sm' 
+                            ? 'text-slate-700 dark:text-slate-400 bg-slate-500/10 shadow-sm' 
                             : 'text-slate-600 dark:text-slate-400 hover:bg-slate-900/5 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-slate-200'
                         }`}
                       >
@@ -291,9 +294,9 @@ export default function Home({ initialUser }: { initialUser?: string }) {
           <div className="grid grid-cols-3 gap-4">
             <div>
               <div className="text-slate-500 dark:text-slate-400 text-xs mb-1 flex items-center gap-1">
-                <ArrowDownRight className="w-3 h-3 text-emerald-600 dark:text-emerald-400" /> Income
+                <ArrowDownRight className="w-3 h-3 text-slate-600 dark:text-slate-400" /> Income
               </div>
-              <div className="text-xl font-semibold text-emerald-600 dark:text-emerald-400">₹{history.summary[summaryType]?.income || 0}</div>
+              <div className="text-xl font-semibold text-slate-600 dark:text-slate-400">₹{history.summary[summaryType]?.income || 0}</div>
             </div>
             <div>
               <div className="text-slate-500 dark:text-slate-400 text-xs mb-1 flex items-center gap-1">
@@ -314,7 +317,7 @@ export default function Home({ initialUser }: { initialUser?: string }) {
         <h2 className="text-lg font-semibold text-slate-900 dark:text-white mb-6">Recent Transactions</h2>
         {isLoadingHistory ? (
           <div className="flex justify-center py-8">
-            <Loader2 className="w-8 h-8 animate-spin text-emerald-600/50 dark:text-emerald-500/50" />
+            <Loader2 className="w-8 h-8 animate-spin text-slate-600/50 dark:text-slate-500/50" />
           </div>
         ) : Object.keys(groupedTx).length === 0 ? (
           <p className="text-slate-500 dark:text-slate-400 text-center py-8 glass-card rounded-2xl">No recent transactions.</p>
@@ -325,9 +328,9 @@ export default function Home({ initialUser }: { initialUser?: string }) {
                 <h3 className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-3 ml-2">{dateStr}</h3>
                 <div className="space-y-3">
                   {txs.map((tx: any, i: number) => (
-                    <div key={i} className="glass-card rounded-2xl p-4 flex items-center justify-between hover:bg-slate-900/[0.04] dark:hover:bg-white/[0.04] transition-colors">
+                    <div key={i} className="glass-card glass-card-hover rounded-2xl p-4 flex items-center justify-between transition-all">
                       <div className="flex items-center gap-4">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${tx.type === 'Credit' ? 'bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400' : 'bg-slate-100 dark:bg-slate-500/20 text-slate-600 dark:text-slate-300'}`}>
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${tx.type === 'Credit' ? 'bg-slate-100 dark:bg-slate-500/20 text-slate-600 dark:text-slate-400' : 'bg-slate-100 dark:bg-slate-500/20 text-slate-600 dark:text-slate-300'}`}>
                           {tx.type === 'Credit' ? <ArrowDownRight className="w-5 h-5" /> : <ArrowUpRight className="w-5 h-5" />}
                         </div>
                         <div>
@@ -336,7 +339,7 @@ export default function Home({ initialUser }: { initialUser?: string }) {
                         </div>
                       </div>
                       <div className="flex items-center gap-4">
-                        <div className={`font-semibold ${tx.type === 'Credit' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-900 dark:text-white'}`}>
+                        <div className={`font-semibold ${tx.type === 'Credit' ? 'text-slate-600 dark:text-slate-400' : 'text-slate-900 dark:text-white'}`}>
                           {tx.type === 'Credit' ? '+' : ''}₹{tx.amount}
                         </div>
                         <button
@@ -374,7 +377,7 @@ export default function Home({ initialUser }: { initialUser?: string }) {
               initial={{ scale: 0.95, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 20 }}
-              className="glass-card bg-white dark:bg-slate-900 w-full max-w-sm rounded-3xl p-6 shadow-2xl border border-emerald-100 dark:border-emerald-500/20"
+              className="glass-card bg-white dark:bg-slate-900 w-full max-w-sm rounded-3xl p-6 shadow-2xl border border-slate-100 dark:border-slate-500/20"
             >
               <div className="flex flex-col items-center text-center mb-6">
                 <div className="w-12 h-12 bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center mb-4">

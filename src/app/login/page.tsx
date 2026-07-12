@@ -51,11 +51,11 @@ export default function LoginPage() {
         className="w-full max-w-sm"
       >
         <div className="glass-card rounded-3xl p-8 shadow-2xl relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-emerald-600" />
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-zinc-400 to-zinc-800 dark:from-zinc-700 dark:to-zinc-300" />
           
           <div className="flex flex-col items-center mb-8">
-            <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-500/20 rounded-full flex items-center justify-center mb-4 border border-emerald-200 dark:border-emerald-500/30">
-              <Lock className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
+            <div className="w-16 h-16 bg-slate-100 dark:bg-slate-500/20 rounded-full flex items-center justify-center mb-4 border border-slate-200 dark:border-slate-500/30">
+              <Lock className="w-8 h-8 text-slate-600 dark:text-slate-400" />
             </div>
             <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">Expense Tracker</h1>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">Private access only</p>
@@ -68,7 +68,7 @@ export default function LoginPage() {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="Enter Username"
-                className="w-full glass-input rounded-xl px-4 py-4 text-center text-lg tracking-widest placeholder:tracking-normal placeholder:text-slate-500 transition-all focus:ring-2 focus:ring-emerald-500/50 mb-4"
+                className="w-full glass-input rounded-xl px-4 py-4 text-center text-lg tracking-widest placeholder:tracking-normal placeholder:text-slate-500 transition-all focus:ring-2 focus:ring-slate-500/50 mb-4"
                 required
                 suppressHydrationWarning
               />
@@ -78,14 +78,14 @@ export default function LoginPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter Password"
-                  className="w-full glass-input rounded-xl px-4 py-4 text-center text-lg tracking-widest placeholder:tracking-normal placeholder:text-slate-500 transition-all focus:ring-2 focus:ring-emerald-500/50 pr-12"
+                  className="w-full glass-input rounded-xl px-4 py-4 text-center text-lg tracking-widest placeholder:tracking-normal placeholder:text-slate-500 transition-all focus:ring-2 focus:ring-slate-500/50 pr-12"
                   required
                   suppressHydrationWarning
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-emerald-500 transition-colors"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-500 transition-colors"
                 >
                   {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
@@ -105,7 +105,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full glass-button rounded-xl py-4 font-semibold text-lg flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full glass-button rounded-xl py-4 font-semibold text-lg flex items-center justify-center gap-2 shadow-lg shadow-slate-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
               suppressHydrationWarning
             >
               {isLoading ? (
