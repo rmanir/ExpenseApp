@@ -92,12 +92,27 @@ const CATEGORY_MAP: Record<string, string> = {
 };
 
 function getCategory(notes: string): string {
-  const normalized = notes.toLowerCase().replace(/\s+/g, '').trim();
-  for (const [key, category] of Object.entries(CATEGORY_MAP)) {
-    if (normalized.includes(key.toLowerCase().replace(/\s+/g, ''))) {
-      return category;
+  const lowerNotes = notes.toLowerCase().trim();
+  const normalized = lowerNotes.replace(/\s+/g, '');
+  
+  // Sort keys by length descending to match more specific categories first
+  const keys = Object.keys(CATEGORY_MAP).sort((a, b) => b.length - a.length);
+  
+  for (const key of keys) {
+    // Primary match: exact word or plural with word boundaries
+    if (new RegExp(`\\b${key}s?\\b`, 'i').test(lowerNotes)) {
+      return CATEGORY_MAP[key];
     }
   }
+  
+  for (const key of keys) {
+    // Fallback match: substring match for longer words to avoid false positives 
+    // like "ec" in "icecream" or "emi" in "premium"
+    if (key.length > 3 && normalized.includes(key.replace(/\s+/g, ''))) {
+      return CATEGORY_MAP[key];
+    }
+  }
+  
   return 'Others';
 }
 
@@ -135,6 +150,13 @@ function parseDate(dateStr?: string): string {
 
 export function parseTransaction(input: string): ParsedTransaction {
   const tokens = input.trim().split(/\s+/);
+  
+  let isCC = false;
+  if (tokens.length > 0 && tokens[0].toLowerCase() === 'cc') {
+    isCC = true;
+    tokens.shift();
+  }
+
   if (tokens.length < 3) {
     throw new Error('Invalid Input\n\nValid Format. Examples: \n89 food d\n10000 salary c\n500 petrol d 22/06');
   }
@@ -173,10 +195,11 @@ export function parseTransaction(input: string): ParsedTransaction {
 
   const date = parseDate(dateStr);
   const category = getCategory(notes);
+  const finalNotes = isCC ? `cc-${notes}` : notes;
 
   return {
     amount,
-    notes,
+    notes: finalNotes,
     type,
     date,
     category,
