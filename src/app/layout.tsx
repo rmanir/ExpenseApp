@@ -30,7 +30,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={cn(inter.variable, "antialiased")} suppressHydrationWarning>
-      <body className="min-h-screen bg-[var(--color-brand-bg)] text-slate-900 dark:text-white font-sans selection:bg-brand-primary selection:text-white transition-colors duration-300">
+      <body className="min-h-screen bg-[var(--color-brand-bg)] text-slate-900 dark:text-white font-sans selection:bg-brand-primary selection:text-white transition-colors duration-300" suppressHydrationWarning>
         <ThemeProvider>
           {children}
         </ThemeProvider>

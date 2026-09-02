@@ -128,8 +128,32 @@ export default function Home({ initialUser }: { initialUser?: string }) {
   };
 
   const groupedTx = history?.summary?.transactions?.[summaryType]?.reduce((acc: any, tx: any) => {
-    const date = new Date(tx.date);
-    const dateStr = new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).format(date);
+    let dateStr = tx.date;
+    if (tx.date) {
+      let normalized = String(tx.date).trim();
+      if (/^\d+(\.\d+)?$/.test(normalized)) {
+        const num = parseFloat(normalized);
+        if (num > 10000 && num < 90000) {
+          const d = new Date((num - 25569) * 86400 * 1000);
+          const yyyy = d.getUTCFullYear();
+          const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+          const dd = String(d.getUTCDate()).padStart(2, '0');
+          normalized = `${yyyy}-${mm}-${dd}`;
+        }
+      }
+      
+      const parts = normalized.split('-');
+      let dateObj: Date;
+      if (parts.length === 3) {
+        dateObj = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+      } else {
+        dateObj = new Date(normalized);
+      }
+
+      if (!isNaN(dateObj.getTime())) {
+        dateStr = new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).format(dateObj);
+      }
+    }
     if (!acc[dateStr]) acc[dateStr] = [];
     acc[dateStr].push(tx);
     return acc;

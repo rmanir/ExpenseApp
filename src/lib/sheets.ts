@@ -185,6 +185,27 @@ export async function saveTransaction(tx: ParsedTransaction, username?: string):
                     startRowIndex: startRow,
                     endRowIndex: endRow,
                     startColumnIndex: 1,
+                    endColumnIndex: 2,
+                  },
+                  cell: {
+                    userEnteredFormat: {
+                      numberFormat: {
+                        type: 'DATE',
+                        pattern: 'yyyy-mm-dd',
+                      },
+                      horizontalAlignment: 'LEFT',
+                    },
+                  },
+                  fields: 'userEnteredFormat.numberFormat,userEnteredFormat.horizontalAlignment',
+                }
+              },
+              {
+                repeatCell: {
+                  range: {
+                    sheetId: finalSheetId,
+                    startRowIndex: startRow,
+                    endRowIndex: endRow,
+                    startColumnIndex: 2,
                     endColumnIndex: 6,
                   },
                   cell: {
@@ -203,6 +224,61 @@ export async function saveTransaction(tx: ParsedTransaction, username?: string):
   }
 
   return sheetName;
+}
+
+export function normalizeSheetDate(val: any): string {
+  if (!val) return '';
+  const strVal = String(val).trim();
+
+  // 1. If it's an Excel/Google Sheets serial date number (e.g. 46285 or "46285")
+  if (/^\d+(\.\d+)?$/.test(strVal)) {
+    const num = parseFloat(strVal);
+    if (num > 10000 && num < 90000) {
+      const date = new Date((num - 25569) * 86400 * 1000);
+      const yyyy = date.getUTCFullYear();
+      const mm = String(date.getUTCMonth() + 1).padStart(2, '0');
+      const dd = String(date.getUTCDate()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd}`;
+    }
+  }
+
+  // 2. If it's already YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}$/.test(strVal)) {
+    return strVal;
+  }
+
+  // 3. Handle DD/MM/YYYY or DD-MM-YYYY format
+  const dmyMatch = strVal.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})$/);
+  if (dmyMatch) {
+    const [, day, month, year] = dmyMatch;
+    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+  }
+
+  // 4. Fallback to JS Date parsing
+  const d = new Date(strVal);
+  if (!isNaN(d.getTime())) {
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  return strVal;
+}
+
+export function parseDateString(dateStr: string): Date {
+  if (!dateStr) return new Date();
+  const normalized = normalizeSheetDate(dateStr);
+  const parts = normalized.split('-');
+  if (parts.length === 3) {
+    const y = parseInt(parts[0], 10);
+    const m = parseInt(parts[1], 10) - 1;
+    const d = parseInt(parts[2], 10);
+    if (!isNaN(y) && !isNaN(m) && !isNaN(d)) {
+      return new Date(y, m, d);
+    }
+  }
+  return new Date(normalized);
 }
 
 export async function getRecentTransactions(days: number = 7, username?: string) {
@@ -238,7 +314,7 @@ export async function getRecentTransactions(days: number = 7, username?: string)
           if (!username || txUser === username) {
             allTx.push({
               amount: parseFloat(row[0]),
-              date: row[1],
+              date: normalizeSheetDate(row[1]),
               type: row[2],
               notes: row[3],
               category: row[4],
@@ -253,14 +329,14 @@ export async function getRecentTransactions(days: number = 7, username?: string)
   }
 
   // Sort by date desc
-  allTx.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  allTx.sort((a, b) => parseDateString(b.date).getTime() - parseDateString(a.date).getTime());
 
   // Filter last 7 days
   const today = new Date();
   today.setHours(0,0,0,0);
   const cutoffDate = new Date(today.getTime() - (days - 1) * 24 * 60 * 60 * 1000);
   
-  const recent = allTx.filter(tx => new Date(tx.date) >= cutoffDate);
+  const recent = allTx.filter(tx => parseDateString(tx.date) >= cutoffDate);
   return recent;
 }
 
@@ -313,7 +389,7 @@ export async function getSummaries(username?: string) {
           if (!username || txUser === username) {
               allTx.push({
                 amount: parseFloat(row[0]),
-                date: row[1],
+                date: normalizeSheetDate(row[1]),
                 type: row[2],
                 notes: row[3],
                 category: row[4],
@@ -332,7 +408,7 @@ export async function getSummaries(username?: string) {
   const todayObj = new Date();
   todayObj.setHours(0,0,0,0);
   const cutoff7Days = new Date(todayObj.getTime() - 6 * 24 * 60 * 60 * 1000); // 7 days including today
-  const last7DaysTx = allTx.filter(tx => new Date(tx.date) >= cutoff7Days);
+  const last7DaysTx = allTx.filter(tx => parseDateString(tx.date) >= cutoff7Days);
 
   const currentMonthTx = allTx.filter(tx => tx.sheetName === currentMonthName);
 
@@ -349,14 +425,16 @@ export async function getSummaries(username?: string) {
     return { income, expense, net: income - expense };
   };
 
+  const sortByDateDesc = (a: any, b: any) => parseDateString(b.date).getTime() - parseDateString(a.date).getTime();
+
   return {
     today: calculateSummary(todayTx),
     last7Days: calculateSummary(last7DaysTx),
     currentMonth: calculateSummary(currentMonthTx),
     transactions: {
-      today: todayTx.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
-      last7Days: last7DaysTx.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
-      currentMonth: currentMonthTx.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()),
+      today: todayTx.sort(sortByDateDesc),
+      last7Days: last7DaysTx.sort(sortByDateDesc),
+      currentMonth: currentMonthTx.sort(sortByDateDesc),
     }
   };
 }
